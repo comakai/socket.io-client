@@ -951,6 +951,8 @@ Socket.prototype.disconnect = function(){
 
   // remove socket from pool
   this.destroy();
+  this.connected = false;
+  this.disconnected = true;
 
   // fire events
   this.onclose('io client disconnect');
