@@ -641,7 +641,6 @@ function Socket(io, nsp){
   this.sendBuffer = [];
   this.connected = false;
   this.disconnected = true;
-  this.subEvents();
 }
 
 /**
@@ -657,6 +656,9 @@ Emitter(Socket.prototype);
  */
 
 Socket.prototype.subEvents = function() {
+
+  if (this.subs) return;
+
   var io = this.io;
   this.subs = [
     on(io, 'open', bind(this, 'onopen')),
@@ -666,15 +668,16 @@ Socket.prototype.subEvents = function() {
 };
 
 /**
- * Called upon engine `open`.
+ * "Opens" the socket.
  *
- * @api private
+ * @api public
  */
 
 Socket.prototype.open =
 Socket.prototype.connect = function(){
   if (this.connected) return this;
 
+  this.subEvents();
   this.io.open(); // ensure open
   if ('open' == this.io.readyState) this.onopen();
   return this;
@@ -743,7 +746,7 @@ Socket.prototype.packet = function(packet){
 };
 
 /**
- * "Opens" the socket.
+ * Called upon engine `open`.
  *
  * @api private
  */
@@ -931,6 +934,7 @@ Socket.prototype.destroy = function(){
   for (var i = 0; i < this.subs.length; i++) {
     this.subs[i].destroy();
   }
+  this.subs = null;
 
   this.io.destroy(this);
 };
@@ -951,8 +955,6 @@ Socket.prototype.disconnect = function(){
 
   // remove socket from pool
   this.destroy();
-  this.connected = false;
-  this.disconnected = true;
 
   // fire events
   this.onclose('io client disconnect');
